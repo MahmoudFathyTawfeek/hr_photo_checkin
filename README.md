@@ -1,33 +1,10 @@
 ### Hr Photo Checkin
 
-this app to add photo to employee checkin
+Custom Frappe app to enforce photo attachments during employee checkin.
 
-### Installation
+# Features
 
-You can install this app using the [bench](https://github.com/frappe/bench) CLI:
+-add checkin toggle in HR Settings.
+-add photo attachment field in employee checkin.
+-implement backend validation logic and unit tests.
 
-```bash
-cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch version-16
-bench install-app hr_photo_checkin
-```
-
-### Contributing
-
-This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
-
-```bash
-cd apps/hr_photo_checkin
-pre-commit install
-```
-
-Pre-commit is configured to use the following tools for checking and formatting your code:
-
-- ruff
-- eslint
-- prettier
-- pyupgrade
-
-### License
-
-mit
