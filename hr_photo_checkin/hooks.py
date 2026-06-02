@@ -5,6 +5,22 @@ app_description = "this app to add photo to employee checkin"
 app_email = "mahmoudtawfeek815@gmail.com"
 app_license = "mit"
 
+fixtures = [
+    {
+        "dt": "Custom Field",
+        "filters": [
+            [
+                "name",
+                "in",
+                [
+                    "Employee Checkin-custom_require_employee_checkin_photo",
+                    "Employee Checkin-custom_employee_photo"
+                ]
+            ]
+        ]
+    }
+]
+
 # Apps
 # ------------------
 

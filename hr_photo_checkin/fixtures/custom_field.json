@@ -1,0 +1,19 @@
+[
+  {
+    "doctype": "Custom Field",
+    "dt": "Employee Checkin",
+    "fieldname": "custom_employee_photo",
+    "label": "Employee Photo",
+    "fieldtype": "Attach Image",
+    "insert_after": "custom_section_break_chnvp",
+    "reqd": 1
+  },
+  {
+    "doctype": "Custom Field",
+    "dt": "Employee Checkin",
+    "fieldname": "custom_require_employee_checkin_photo",
+    "label": "Require Employee Checkin Photo",
+    "fieldtype": "Check",
+    "insert_after": "custom_employee_photo"
+  }
+]
