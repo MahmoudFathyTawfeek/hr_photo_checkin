@@ -1,0 +1,13 @@
+
+
+import frappe
+
+def validate_checkin(doc, method):
+    required = frappe.db.get_single_value(
+        "HR Settings",
+        "require_employee_checkin_photo"
+    )
+
+    if required:
+        if not doc.custom_employee_photo:
+            frappe.throw("Employee photo is required for check-in")
