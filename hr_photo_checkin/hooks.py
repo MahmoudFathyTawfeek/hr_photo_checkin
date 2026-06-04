@@ -26,3 +26,7 @@ doc_events = {
         "before_insert": "hr_photo_checkin.hr_photo_checkin.checkin_validation.validate_checkin"
     }
 }
+
+doctype_list_js = {
+    "Employee Checkin": "public/js/employee_checkin_list.js"
+}
