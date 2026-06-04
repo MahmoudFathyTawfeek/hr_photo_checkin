@@ -2,17 +2,55 @@
 
 Custom Frappe app that extends the Employee Checkin workflow in Frappe HR by introducing an optional photo requirement controlled through HR Settings.
 
-## Features
+### HR Settings Customization
 
-* Added a custom checkbox field "Require Employee Checkin Photo" to *HR Settings* using Frappe Custom Fields and Fixtures.
-* Added a custom **Attach Image** field (`custom_employee_photo`) to the **Employee Checkin** doctype for storing check-in photos.
-* Registered a backend validation hook through `doc_events` in the custom app without modifying any HRMS source code.
-* Implemented validation logic that checks the value of **Require Employee Checkin Photo** before saving an Employee Checkin record:
+A custom checkbox field named **Require Employee Checkin Photo** was added to the **HR Settings** doctype. The field was created as a Custom Field and exported through fixtures so that it becomes part of the application and can be deployed consistently across different environments.
 
-  * If the checkbox is enabled, a photo must be attached.
-  * If the checkbox is disabled, the check-in can be saved without a photo.
-* Exported all custom fields as fixtures to ensure they are version-controlled and can be deployed consistently across environments.
+This checkbox acts as a feature toggle that controls whether a photo is required during employee check-in.
 
-# Current Status
+### Employee Checkin Customization
 
-The backend validation workflow is complete and the photo requirement can be controlled directly from **HR Settings** through the custom toggle.
+A custom **Attach Image** field named **custom_employee_photo** was added to the **Employee Checkin** doctype. This field stores the photo captured or uploaded during the check-in process.
+
+Like the HR Settings field, it is managed through fixtures and version controlled with the application.
+
+### Validation Workflow
+
+A validation hook was registered using `doc_events` in the application's `hooks.py` file.
+
+Before a new Employee Checkin record is inserted:
+
+1. The application reads the value of **Require Employee Checkin Photo** from HR Settings.
+2. If the toggle is enabled, the system verifies that a photo exists in `custom_employee_photo`.
+3. If no photo is attached, a validation error is raised and the check-in is rejected.
+4. If the toggle is disabled, the validation is skipped and the check-in is saved normally.
+
+This approach allows HR administrators to enable or disable photo enforcement without changing any code.
+
+### List View Enhancement
+
+The Employee Checkin List View was customized using `doctype_list_js`.
+
+The custom script retrieves the `custom_employee_photo` field using `add_fields` and displays photo thumbnails directly within the Employee Checkin list. This provides a quick visual reference for check-in records without opening individual documents.
+
+### Fixtures
+
+All Custom Fields were exported as fixtures to ensure:
+
+* Version control through Git.
+* Consistent deployment across sites.
+* No dependency on manual UI customization.
+* Compliance with the Frappe custom app development pattern.
+
+### Current Status
+
+The backend implementation is complete and includes:
+
+* HR Settings toggle for photo enforcement.
+* Employee Checkin photo field.
+* Backend validation logic.
+* Employee Checkin List View photo thumbnails.
+* Fixture-based customization management.
+
+No modifications were made to HRMS or ERPNext source code.
+
