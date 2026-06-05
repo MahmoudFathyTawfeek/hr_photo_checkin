@@ -42,6 +42,43 @@ All Custom Fields were exported as fixtures to ensure:
 * No dependency on manual UI customization.
 * Compliance with the Frappe custom app development pattern.
 
+## Automated Tests
+
+The application includes three automated tests implemented using `FrappeTestCase`.
+
+To keep the tests focused on the validation logic, a lightweight `Doc` class is used to simulate an Employee Checkin document. The validation function only depends on the `custom_employee_photo` field, so there is no need to create actual Employee Checkin records during testing.
+
+The value of the HR Settings toggle (`require_employee_checkin_photo`) is simulated by temporarily overriding `frappe.db.get_single_value`, allowing each scenario to be tested independently.
+
+### Covered Scenarios
+
+1. **Photo Required + Photo Provided**
+
+   * The HR Settings toggle is enabled.
+   * A photo is provided.
+   * Validation succeeds without raising any errors.
+
+2. **Photo Required + Photo Missing**
+
+   * The HR Settings toggle is enabled.
+   * No photo is provided.
+   * Validation raises a `ValidationError`.
+
+3. **Photo Not Required**
+
+   * The HR Settings toggle is disabled.
+   * No photo is provided.
+   * Validation succeeds without raising any errors.
+
+### Running Tests
+
+bench --site localhost run-tests --app hr_photo_checkin
+
+# Result
+Ran 3 tests
+
+OK
+
 ### Current Status
 
 The backend implementation is complete and includes:
