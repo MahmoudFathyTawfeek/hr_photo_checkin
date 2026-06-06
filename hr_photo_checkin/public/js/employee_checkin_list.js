@@ -1,25 +1,15 @@
+
+
 frappe.listview_settings['Employee Checkin'] = {
     add_fields: ['custom_employee_photo'],
+    formatters: {
+        custom_employee_photo(value) {
+            if (value) {
+               
+                return `<img src="${value}" style="width:50px;height:50px;border-radius:20%;">`;
 
-    before_render() {
-        setTimeout(() => {
-
-            cur_list.data.forEach(row => {
-
-                if (!row.custom_employee_photo) return;
-
-                document
-                    .querySelectorAll(`a[data-name="${row.name}"]`)
-                    .forEach(link => {
-
-                        link.innerHTML =
-                            `<img src="${row.custom_employee_photo}"
-                                  style="width:30px;height:30px;border-radius:50%;margin-right:8px;">`
-                            + link.innerHTML;
-                    });
-            });
-
-        }, 300);
+            }
+            return "";
+        }
     }
-};
-
+}
