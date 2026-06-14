@@ -1,0 +1,275 @@
+{% extends "templates/web.html" %}
+
+{% block title %}Photo Check-in{% endblock %}
+
+{% block page_content %}
+<div class="checkin-container">
+
+  <!-- Header -->
+  <div class="checkin-header">
+    <h2>Take Your Photo</h2>
+    <p class="subtitle">Capture a photo to attach to your check-in</p>
+  </div>
+
+  <!-- Step 1: Camera -->
+  <div id="step-camera" class="step active">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <div class="btn-row">
+      <button id="btn-capture" class="btn-primary" onclick="capturePhoto()">Capture</button>
+    </div>
+
+    <div id="camera-error" class="error-msg" style="display:none;"></div>
+  </div>
+
+  <!-- Step 2: Preview -->
+  <div id="step-preview" class="step">
+    <img id="preview-img" src="" alt="Preview" />
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="retake()">Retake</button>
+      <button class="btn-primary" onclick="confirmPhoto()">Confirm</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Uploading -->
+  <div id="loader" class="loader" style="display:none;">
+    <div class="spinner"></div>
+    <p>Uploading photo...</p>
+  </div>
+
+  <!-- Step 4: Error -->
+  <div id="step-error" class="step">
+    <div class="result-icon"></div>
+    <p id="error-msg" class="result-msg"></p>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="retake()">Try Again</button>
+    </div>
+  </div>
+
+</div>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .checkin-container {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 24px 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .checkin-header { text-align: center; }
+  .checkin-header h2 { font-size: 1.5rem; font-weight: 700; }
+  .subtitle { color: #666; font-size: 0.9rem; margin-top: 4px; }
+
+  .step { display: none; flex-direction: column; gap: 16px; }
+  .step.active { display: flex; }
+
+  #video {
+    width: 100%;
+    border-radius: 12px;
+    background: #000;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+  }
+
+  #preview-img {
+    width: 100%;
+    border-radius: 12px;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+  }
+
+  .btn-row { display: flex; gap: 12px; justify-content: center; }
+
+  .btn-primary, .btn-secondary {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-primary { background: #2490ef; color: #fff; }
+  .btn-secondary { background: #f0f0f0; color: #333; }
+  .btn-primary:active, .btn-secondary:active { opacity: 0.75; }
+
+  .result-icon { font-size: 3rem; text-align: center; }
+  .result-msg { text-align: center; font-size: 1rem; color: #333; line-height: 1.5; }
+
+  .error-msg {
+    background: #fff0f0;
+    color: #c0392b;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .loader {
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 100;
+  }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 4px solid #ddd;
+    border-top-color: #2490ef;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<script>
+  let stream = null;
+  let photoBlob = null;
+  const MAX_SIZE_BYTES = 1 * 1024 * 1024;
+
+  // ─── Get redirect URL from query param ───────────────────
+  // e.g. /photo-checkin?redirect=/app/employee-checkin/new-1
+  const params = new URLSearchParams(window.location.search);
+  const redirectUrl = params.get("redirect") || "/app/employee-checkin/new-employee-checkin-1";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    startCamera();
+  });
+
+  // ─── Camera ──────────────────────────────────────────────
+  async function startCamera() {
+    const errEl = document.getElementById("camera-error");
+    errEl.style.display = "none";
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showCameraError("Camera not supported on this browser.");
+      return;
+    }
+
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } },
+        audio: false
+      });
+      document.getElementById("video").srcObject = stream;
+    } catch (err) {
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        showCameraError("Camera permission denied. Please allow camera access and refresh.");
+      } else if (err.name === "NotFoundError") {
+        showCameraError("No camera found on this device.");
+      } else {
+        showCameraError("Could not start camera: " + err.message);
+      }
+      document.getElementById("btn-capture").disabled = true;
+    }
+  }
+
+  function showCameraError(msg) {
+    const el = document.getElementById("camera-error");
+    el.textContent = msg;
+    el.style.display = "block";
+  }
+
+  // ─── Capture ─────────────────────────────────────────────
+  async function capturePhoto() {
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+
+    canvas.toBlob(async (blob) => {
+      if (blob.size > MAX_SIZE_BYTES) {
+        blob = await compressImage(canvas, blob.size);
+      }
+      photoBlob = blob;
+
+      const url = URL.createObjectURL(blob);
+      document.getElementById("preview-img").src = url;
+      showStep("step-preview");
+      stopCamera();
+    }, "image/jpeg", 0.85);
+  }
+
+  async function compressImage(canvas, originalSize) {
+    let quality = 0.85 * (MAX_SIZE_BYTES / originalSize);
+    quality = Math.max(0.3, Math.min(quality, 0.85));
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), "image/jpeg", quality);
+    });
+  }
+
+  function stopCamera() {
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+    }
+  }
+
+  // ─── Retake ───────────────────────────────────────────────
+  function retake() {
+    photoBlob = null;
+    document.getElementById("preview-img").src = "";
+    showStep("step-camera");
+    startCamera();
+  }
+
+  // ─── Confirm: upload then redirect back to form ───────────
+  async function confirmPhoto() {
+    if (!photoBlob) return;
+    showLoader(true);
+
+    try {
+        const filename = "checkin_" + Date.now() + ".jpg";
+        const formData = new FormData();
+        formData.append("file", photoBlob, filename);
+        formData.append("is_private", "0");
+
+        const uploadRes = await fetch("/api/method/upload_file", {
+            method: "POST",
+            headers: { "X-Frappe-CSRF-Token": frappe.csrf_token },
+            body: formData
+        });
+
+        const uploadData = await uploadRes.json();
+        if (!uploadData.message || !uploadData.message.file_url) {
+            throw new Error("Photo upload failed.");
+        }
+
+        const photoUrl = uploadData.message.file_url;
+
+        // بعت الصورة للـ parent window وأغلق الـ iframe
+        window.parent.postMessage({ type: "photo_captured", photoUrl: photoUrl }, "*");
+
+    } catch (err) {
+        showLoader(false);
+        document.getElementById("error-msg").textContent = err.message || "Upload failed.";
+        showStep("step-error");
+    }
+}
+
+  // ─── Helpers ──────────────────────────────────────────────
+  function showStep(id) {
+    document.querySelectorAll(".step").forEach(el => el.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
+
+  function showLoader(show) {
+    document.getElementById("loader").style.display = show ? "flex" : "none";
+  }
+</script>
+{% endblock %}
