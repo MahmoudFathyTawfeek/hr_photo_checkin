@@ -91,3 +91,25 @@ The backend implementation is complete and includes:
 
 No modifications were made to HRMS or ERPNext source code.
 
+========================================================================
+
+# Fork HRMS vs Separate Route
+# Fork HRMS
+Modify the HRMS Vue components directly in a branch.
+
+-Seamless UX — camera step lives inside the existing PWA flow
+-Creates maintenance debt — every HRMS upstream update needs to be manually merged
+-Risk of breaking existing HRMS functionality
+
+# Separate Route (chosen)
+Build a standalone /photo-checkin page inside the custom app, and override the attach button on the Employee Checkin form to open it on mobile.
+
+-Zero changes to HRMS source — fully isolated
+-Easy to maintain and remove
+-Deployed as part of the custom app, not a fork
+-Slight UX split — camera opens as an overlay, not native to the PWA
+
+# Why Separate Route
+The fork approach creates long-term maintenance debt that outweighs the UX benefit. Since the project is in early staging and the team is small, keeping HRMS untouched reduces risk significantly. The separate route approach is also easier to test, review, and roll back independently.
+The tradeoff accepted: slightly less seamless UX in exchange for a clean, maintainable codebase.
+

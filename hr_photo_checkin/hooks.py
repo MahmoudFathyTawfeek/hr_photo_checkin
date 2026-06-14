@@ -30,3 +30,7 @@ doc_events = {
 doctype_list_js = {
     "Employee Checkin": "public/js/employee_checkin_list.js"
 }
+
+doctype_js = {
+    "Employee Checkin": "public/js/employee_checkin.js"
+}

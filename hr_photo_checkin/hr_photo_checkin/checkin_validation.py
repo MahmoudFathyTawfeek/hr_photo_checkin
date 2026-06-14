@@ -1,6 +1,7 @@
 
 
 import frappe
+from frappe.utils.file_manager import save_file
 
 def validate_checkin(doc, method):
     required = frappe.db.get_single_value(
