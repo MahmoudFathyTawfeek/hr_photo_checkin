@@ -1,6 +1,6 @@
 frappe.ui.form.on('Employee Checkin', {
     refresh(frm) {
-        if (window.innerWidth <= 768 || /Mobi|Android/i.test(navigator.userAgent)) {
+        if (window.innerWidth <= 768 ) {
             setTimeout(() => {
                 const field = frm.get_field("custom_employee_photo");
                 if (field && field.$wrapper) {

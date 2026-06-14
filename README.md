@@ -92,24 +92,82 @@ The backend implementation is complete and includes:
 No modifications were made to HRMS or ERPNext source code.
 
 ========================================================================
+## Week 2 — Frontend Architecture Decision
 
-# Fork HRMS vs Separate Route
-# Fork HRMS
-Modify the HRMS Vue components directly in a branch.
+### The Problem
+The task required extending the HRMS PWA to capture a photo 
+during employee check-in. Two options were considered:
 
--Seamless UX — camera step lives inside the existing PWA flow
--Creates maintenance debt — every HRMS upstream update needs to be manually merged
--Risk of breaking existing HRMS functionality
+**Option 1: Fork HRMS**
+- Clone HRMS and modify CheckInPanel.vue directly
+- Modifies HRMS core code
+- Creates merge conflicts on every HRMS update
+- Long-term maintenance debt
 
-# Separate Route (chosen)
-Build a standalone /photo-checkin page inside the custom app, and override the attach button on the Employee Checkin form to open it on mobile.
+**Option 2: Separate Route (Chosen)**
+- Build a new page `/photo-checkin` inside the custom app
+- Zero changes to HRMS source code
+- All code lives inside our custom app
+- Survives HRMS updates with no conflicts
+- Tradeoff: Users access a different URL
 
--Zero changes to HRMS source — fully isolated
--Easy to maintain and remove
--Deployed as part of the custom app, not a fork
--Slight UX split — camera opens as an overlay, not native to the PWA
+# Why Override is Not Possible
+HRMS PWA is a compiled Vue.js Single Page Application (SPA).
+The components are compiled into a single minified JS bundle.
+There is no way to override individual Vue components 
+from an external app without modifying the source code directly.
 
-# Why Separate Route
-The fork approach creates long-term maintenance debt that outweighs the UX benefit. Since the project is in early staging and the team is small, keeping HRMS untouched reduces risk significantly. The separate route approach is also easier to test, review, and roll back independently.
-The tradeoff accepted: slightly less seamless UX in exchange for a clean, maintainable codebase.
+# Frontend Implementation
 
+# New Files
+
+`www/photo-checkin.html` ---> Mobile camera UI 
+`www/photo-checkin.py` -----> Server-side context provider 
+
+# photo-checkin.py — What it does
+- Redirects unauthenticated users to /login
+- Fetches the employee ID linked to the logged-in user
+- Fetches the employee name for display
+- Provides CSRF token for secure API calls
+
+# photo-checkin.html — What it does
+- Opens rear camera automatically via getUserMedia()
+- Shows live camera preview
+- Captures photo on button click
+- Shows preview with retake option
+- On confirm: uploads photo and creates Employee Checkin record
+
+## Full Check-in Flow
+
+1. Employee opens `/photo-checkin` on mobile browser
+2. Server verifies login → fetches employee data
+3. Camera opens automatically (rear-facing)
+4. Employee captures photo
+5. Preview shown → can retake if needed
+6. On confirm: Photo uploaded to Frappe file system
+7. Record appears in Employee Checkin list view with thumbnail
+
+## How to Run Locally
+
+### Requirements
+- Frappe bench running on port 8002
+- ngrok for HTTPS (required for camera on mobile)
+
+### Steps
+1. Install app:
+bash
+   bench --site localhost install-app hr_photo_checkin
+   bench --site localhost migrate
+
+
+2. Start bench:
+bash
+   bench start
+
+
+3. Start ngrok (in separate terminal):
+bash
+   ngrok http 8002 --host-header="localhost:8002"
+
+
+4. Open on mobile: https://your-ngrok-url/photo-checkin
