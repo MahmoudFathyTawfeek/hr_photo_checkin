@@ -171,3 +171,44 @@ bash
 
 
 4. Open on mobile: https://your-ngrok-url/photo-checkin
+
+=====================================================================
+
+# vite-alias
+
+vite-alias branch — HR Photo Check-in (Build-time Vue Override)
+What this branch does
+This branch implements the HR Photo Check-in feature using a Vite alias override — replacing HRMS's CheckInPanel.vue at build time with a custom component that adds a mandatory selfie step before check-in.
+Approach: Build-time Vue Component Override
+Instead of building a separate route (see photo-checkin branch), this approach replaces the stock HRMS check-in component directly inside the HRMS PWA by using a Vite resolve alias.
+How it works:
+
+Our custom CheckInPanel.vue lives in hr_photo_checkin/frontend/
+A single env-gated alias in HRMS's vite.config.js tells Vite: "when you reach @/components/CheckInPanel.vue, use our file instead"
+When HR_OVERRIDE_DIR is unset, HRMS builds 100% stock — the change is inert
+The server-side validation (custom_photo required) remains the real enforcement — the UI is convenience
+
+What was changed
+FileChangehr_photo_checkin/frontend/CheckInPanel.vueNew override component with camera captureapps/hrms/frontend/vite.config.jsAdded env-gated alias block (on hrms side)
+Features added in CheckInPanel.vue
+
+1- Camera opens automatically when check-in modal opens
+2- Live preview via getUserMedia()
+3- Retake option before confirming
+4- Auto-compression if image > 1MB
+5- Error handling: permission denied, no camera, upload failure
+6- Server-side validation rejects check-in without photo
+
+How to build
+bashcd ~/frappe-bench/apps/hrms/frontend
+HR_OVERRIDE_DIR=/home/mahmoud/frappe-bench/apps/hr_photo_checkin/frontend yarn build
+How to build stock HRMS (no override)
+bashcd ~/frappe-bench/apps/hrms/frontend
+yarn build
+Comparison with the other approach (photo-checkin branch)
+photo-checkin branchvite-alias branch (this)TechniqueSeparate route /photo-checkinBuild-time Vue overrideEdits HRMSNoOne line in vite.config.jsNeeds rebuildNoYes (~20s)You writeVanilla JS / HTMLReal Vue componentHot reloadNoYes (yarn dev)User learns new URLYesNo — same HRMS PWABest whenZero HRMS edits neededIterating on UI in Vue
+Golden rules
+
+Edit the override file, not HRMS's own CheckInPanel.vue
+Enforce on the server — the build-time UI is just convenience
+A change not showing is almost always the service worker cache — hard refresh
